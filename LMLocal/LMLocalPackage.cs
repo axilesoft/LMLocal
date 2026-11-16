@@ -58,6 +58,7 @@ namespace LMLocal
             // Do any initialization that requires the UI thread after switching to the UI thread.
             await JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
 
+
 #if DEBUG
             // Start IPC first so it does not depend on the rest of initialization succeeding.
             if (Environment.GetEnvironmentVariable("LMLocal_IPC") == "1")
@@ -87,6 +88,7 @@ namespace LMLocal
 
             await ShowMainWindow.InitializeAsync(this);
             await MainWindowCommand.InitializeAsync(this);
+            await TriggerFimCommand.InitializeAsync(this);
             await SendToLMFromEditorCommand.InitializeAsync(this);
             await SendAllOpenFilesCommand.InitializeAsync(this);
             await SendActiveFilesCommand.InitializeAsync(this);

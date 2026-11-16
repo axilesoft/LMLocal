@@ -23,6 +23,7 @@ namespace LMLocal.Tests.Unit.Services
         [SetUp]
         public void SetUp()
         {
+            AutocompleteDebugLog.Enabled = false;
             _configManagerMock = new Mock<IAutocompletionsConfigManager>();
             _providersConfigManagerMock = new Mock<IProvidersConfigManager>();
             _openApiAdapterMock = new Mock<IOpenApiAdapter>();
@@ -35,6 +36,7 @@ namespace LMLocal.Tests.Unit.Services
         [TearDown]
         public void TearDown()
         {
+            AutocompleteDebugLog.Enabled = true;
             _service = null;
         }
 
@@ -46,6 +48,7 @@ namespace LMLocal.Tests.Unit.Services
         [TestCase("Qwen2.5-Coder-7B", "<|fim_prefix|>", "<|fim_suffix|>", "<|fim_middle|>")]
         [TestCase("codegemma-7b", "<|fim_prefix|>", "<|fim_suffix|>", "<|fim_middle|>")]
         [TestCase("CodeGemma-2b", "<|fim_prefix|>", "<|fim_suffix|>", "<|fim_middle|>")]
+        [TestCase(@"models\Kestrel-4B-Coder.i1-Q6_K.gguf", "<|fim_prefix|>", "<|fim_suffix|>", "<|fim_middle|>")]
         public void GetTokens_QwenAndCodeGemma_ReturnsCorrectFimTokens(
             string modelId, string expectedPrefix, string expectedSuffix, string expectedMiddle)
         {
@@ -342,6 +345,7 @@ namespace LMLocal.Tests.Unit.Services
 
             Assert.That(captured, Is.Not.Null);
             Assert.That(captured.Prompt, Is.EqualTo("    ApplyFor"));
+            Assert.That(captured.Suffix, Is.EqualTo("\n}"), "unknown models keep the suffix in the API field");
         }
 
         [Test]

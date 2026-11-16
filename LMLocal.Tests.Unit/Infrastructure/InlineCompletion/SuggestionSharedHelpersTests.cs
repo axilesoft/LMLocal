@@ -154,6 +154,30 @@ namespace LMLocal.Tests.Unit.Infrastructure.InlineCompletion
             Assert.That(SuggestionTagger.NormalizeNewLines("a\r\nb\rc\n"), Is.EqualTo("a\nb\nc\n"));
         }
 
+        // ---- Word / line accept lengths ----
+
+        [TestCase("foo bar", 3)]
+        [TestCase("  foo();", 8)]
+        [TestCase("\n    foo bar", 8)]
+        [TestCase("   ", 3)]
+        [TestCase("", 0)]
+        [TestCase(null, 0)]
+        public void TakeWordLength(string text, int expected)
+        {
+            Assert.That(SuggestionTagger.TakeWordLength(text), Is.EqualTo(expected));
+        }
+
+        [TestCase("foo bar", 7)]
+        [TestCase("a\nb", 2)]
+        [TestCase("\n", 1)]
+        [TestCase("a\n\nb", 2)]
+        [TestCase("", 0)]
+        [TestCase(null, 0)]
+        public void TakeLineLength(string text, int expected)
+        {
+            Assert.That(SuggestionTagger.TakeLineLength(text), Is.EqualTo(expected));
+        }
+
         // ---- InlineCompletionBackend ----
 
         [TestCase("native", true)]

@@ -123,6 +123,7 @@
     <Compile Include="Application\Tool\ToolCallLoopDetector.cs" />
     <Compile Include="Application\Tool\ToolMessageFactory.cs" />
     <Compile Include="Application\Tool\ToolResultTokenEstimator.cs" />
+    <Compile Include="Commands\TriggerFimCommand.cs" />
     <Compile Include="Commands\SendActiveFilesCommand.cs" />
     <Compile Include="Commands\SendAllOpenFilesCommand.cs" />
     <Compile Include="Commands\VisibleDocumentsHelper.cs" />
@@ -190,12 +191,15 @@
     <Compile Include="Core\Models\RecentModelEntry.cs" />
     <Compile Include="Core\Models\SubAgentsConfig.cs" />
     <Compile Include="Core\Models\ToolsConfigFile.cs" />
+    <Compile Include="Infrastructure\Autocompletions\AutocompleteDebugLog.cs" />
     <Compile Include="Infrastructure\Autocompletions\AutocompletionsConfigManager.cs" />
+    <Compile Include="Infrastructure\Autocompletions\InlineCompletion\AcceptKeyCommandHandlers.cs" />
     <Compile Include="Infrastructure\Autocompletions\InlineCompletion\CompletionCache.cs" />
     <Compile Include="Infrastructure\Autocompletions\InlineCompletion\EscapeCommandHandler.cs" />
     <Compile Include="Infrastructure\Autocompletions\InlineCompletion\GhostTextAdornment.cs" />
     <Compile Include="Infrastructure\Autocompletions\InlineCompletion\GhostTextAdornmentLayer.cs" />
     <Compile Include="Infrastructure\Autocompletions\InlineCompletion\RecentCaretContext.cs" />
+    <Compile Include="Infrastructure\Autocompletions\InlineCompletion\SuggestionCommandFilter.cs" />
     <Compile Include="Infrastructure\Autocompletions\InlineCompletion\SuggestionPostProcessor.cs" />
     <Compile Include="Infrastructure\Autocompletions\InlineCompletion\SuggestionTagger.cs" />
     <Compile Include="Infrastructure\Autocompletions\InlineCompletion\SuggestionTextViewCreationListener.cs" />

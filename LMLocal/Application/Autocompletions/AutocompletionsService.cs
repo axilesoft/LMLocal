@@ -91,7 +91,8 @@ namespace LMLocal.Application.Autocompletions
             {
                 ModelId = config.ModelId,
                 Prompt = finalPrompt,
-                Suffix = string.Empty,
+                // Models without known FIM tokens keep the suffix in the API field instead.
+                Suffix = string.IsNullOrEmpty(prefixToken) ? parameters.Suffix : string.Empty,
                 MaxTokens = parameters.MaxTokens,
                 Temperature = parameters.Temperature,
                 Stop = parameters.Stop,
@@ -101,6 +102,7 @@ namespace LMLocal.Application.Autocompletions
             };
 
             var result = await GetCompletionDirectAsync(context, cancellationToken).ConfigureAwait(false);
+            AutocompleteDebugLog.Write(config.ModelId, finalPrompt, result);
             return FimTemplate.TrimFimArtifacts(result, config.ModelId);
         }
 
@@ -170,7 +172,7 @@ namespace LMLocal.Application.Autocompletions
 
                 var modelLower = modelId.ToLowerInvariant();
 
-                if (modelLower.Contains("qwen") || modelLower.Contains("codegemma"))
+                if (modelLower.Contains("qwen") || modelLower.Contains("codegemma") || modelLower.Contains("kestrel"))
                     return ("<|fim_prefix|>", "<|fim_suffix|>", "<|fim_middle|>");
 
                 if (modelLower.Contains("starcoder") || modelLower.Contains("refact") || modelLower.Contains("stable-code"))
@@ -192,7 +194,7 @@ namespace LMLocal.Application.Autocompletions
 
                 var modelLower = modelId.ToLowerInvariant();
 
-                if (modelLower.Contains("qwen") || modelLower.Contains("codegemma"))
+                if (modelLower.Contains("qwen") || modelLower.Contains("codegemma") || modelLower.Contains("kestrel"))
                 {
                     var match = SpecialMarker.Match(output);
                     if (match.Success)

@@ -5,7 +5,7 @@ cd /d "%~dp0" || (echo [ERROR] cannot cd to script directory & exit /b 1)
 where git >nul 2>nul || (echo [ERROR] git not found in PATH & exit /b 1)
 git rev-parse --is-inside-work-tree >nul 2>nul || (echo [ERROR] not a git repository & exit /b 1)
 
-set "BRANCH=local"
+set "BRANCH=main"
 set "REMOTE=backup"
 
 for /f "delims=" %%b in ('git rev-parse --abbrev-ref HEAD') do set "CURRENT=%%b"
@@ -34,6 +34,9 @@ if errorlevel 1 (
 ) else (
     echo [INFO] nothing to commit
 )
+
+echo === push %BRANCH% to origin ===
+git push origin %BRANCH% || goto :fail
 
 echo === push %BRANCH% to %REMOTE% ===
 git push %REMOTE% %BRANCH% || goto :fail

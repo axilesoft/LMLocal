@@ -94,6 +94,10 @@ export class AutocompletionsDialog {
             );
             const selectedOpt = this.el.providerSelect.options[this.el.providerSelect.selectedIndex];
             this._selectedProvider = selectedOpt?._providerData || null;
+            if (this._selectedProvider && this._config) {
+                this._config.providerType = this._selectedProvider.providerType;
+                this._config.providerId = this._selectedProvider.id;
+            }
         } finally {
             this._populatingProvider = false;
         }
@@ -277,6 +281,13 @@ export class AutocompletionsDialog {
 
         this._onProviderChange = () => {
             if (this._populatingProvider) return;
+            const selectedOpt = providerSelect.options[providerSelect.selectedIndex];
+            const provider = selectedOpt?._providerData || null;
+            this._selectedProvider = provider;
+            if (provider && this._config) {
+                this._config.providerType = provider.providerType;
+                this._config.providerId = provider.id;
+            }
             this._loadModels(true);
         };
         providerSelect.addEventListener('change', this._onProviderChange);

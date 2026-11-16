@@ -116,6 +116,14 @@
         </Strings>
       </Button>
 
+      <Button guid="guidLMLocalPackageCmdSet" id="cmdidTriggerFim" priority="0x100" type="Button">
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>Trigger FIM completion</ButtonText>
+        </Strings>
+      </Button>
+
       <!-- Context menu button "Send to LM Local" for the code editor -->
       <Button guid="guidLMLocalPackageCmdSet" id="cmdidAskLMLocal" priority="0x100" type="Button">
         <Parent guid="guidLMLocalPackageCmdSet" id="EditorContextGroup" />
@@ -260,6 +268,11 @@
                 mod1="ALT"
                 key2="A"
                 mod2="ALT" />
+    <KeyBinding guid="guidLMLocalPackageCmdSet"
+                id="cmdidTriggerFim"
+                editor="guidVSStd97"
+                key1="VK_OEM_7"
+                mod1="Alt" />
   </KeyBindings>
 
 
@@ -288,6 +301,7 @@
       <IDSymbol name="LMLocalCommandsGroup" value="0x1040" />
       <IDSymbol name="SendToLMLocalTabCommandsGroup" value="0x1032" />
       <IDSymbol name="cmdidAskLMLocal" value="0x0200" />
+      <IDSymbol name="cmdidTriggerFim" value="0x0210" />
       <IDSymbol name="cmdidReviewCode" value="0x0201" />
       <IDSymbol name="cmdidBugFixCode" value="0x0202" />
       <IDSymbol name="cmdidAddUnitTests" value="0x0203" />

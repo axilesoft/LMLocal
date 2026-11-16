@@ -207,6 +207,16 @@ namespace LMLocal.Infrastructure.Autocompletions.InlineCompletion
             return textView.Properties.TryGetProperty(typeof(SuggestionTagger), out tagger);
         }
 
+        private static SuggestionTagger _focused;
+
+        /// <summary>Last view that had aggregate focus (used by the Alt+' command).</summary>
+        internal static SuggestionTagger Focused => _focused;
+
+        internal static void SetFocused(SuggestionTagger tagger)
+        {
+            _focused = tagger;
+        }
+
         private int GetDebounceDelayMs()
         {
             if (_debounceDelayMs.HasValue)
@@ -293,20 +303,12 @@ namespace LMLocal.Infrastructure.Autocompletions.InlineCompletion
 
         internal virtual void AcceptSuggestion()
         {
-            var state = _state;
-            if (_disposed || state == null || !state.HasValue)
+            if (!TryGetAcceptableState(out var state))
                 return;
 
             var suggestion = state.Text;
             var caret = state.CaretPoint;
             var snapshot = caret.Snapshot;
-
-            var currentCaret = _textView.Caret.Position.BufferPosition;
-            if (currentCaret.Snapshot != snapshot || currentCaret.Position != caret.Position)
-                return;
-
-            if (_textView.TextBuffer.IsReadOnly(currentCaret.Position))
-                return;
 
             string text = PrepareInsertText(suggestion, GetLineEnding(snapshot, caret.Position, _textView.Options));
 
@@ -321,6 +323,105 @@ namespace LMLocal.Infrastructure.Autocompletions.InlineCompletion
                 _suppressNextSuggestion = false;
                 ScheduleSuggestion();
             }
+        }
+
+        /// <summary>Accepts the next whitespace-delimited chunk of the suggestion (Ctrl+Right).</summary>
+        internal void AcceptNextWord()
+        {
+            if (!TryGetAcceptableState(out var state))
+                return;
+
+            AcceptPartial(state, TakeWordLength(state.Text));
+        }
+
+        /// <summary>Accepts the next line of the suggestion (Ctrl+Down).</summary>
+        internal void AcceptNextLine()
+        {
+            if (!TryGetAcceptableState(out var state))
+                return;
+
+            AcceptPartial(state, TakeLineLength(state.Text));
+        }
+
+        /// <summary>Starts a suggestion request immediately (Alt+').</summary>
+        internal void TriggerSuggestion()
+        {
+            if (_disposed)
+                return;
+
+            CancelDebounce();
+            CancelOperation();
+            _ = GenerateSuggestionAsync(manual: true);
+        }
+
+        private bool TryGetAcceptableState(out SuggestionState state)
+        {
+            state = _state;
+            if (_disposed || state == null || !state.HasValue)
+                return false;
+
+            var caret = state.CaretPoint;
+            var currentCaret = _textView.Caret.Position.BufferPosition;
+            return currentCaret.Snapshot == caret.Snapshot &&
+                   currentCaret.Position == caret.Position &&
+                   !_textView.TextBuffer.IsReadOnly(currentCaret.Position);
+        }
+
+        private void AcceptPartial(SuggestionState state, int length)
+        {
+            if (length <= 0)
+            {
+                ClearSuggestion();
+                return;
+            }
+
+            if (length >= state.Text.Length)
+            {
+                AcceptSuggestion();
+                return;
+            }
+
+            string inserted = PrepareInsertText(
+                state.Text.Substring(0, length),
+                GetLineEnding(state.CaretPoint.Snapshot, state.CaretPoint.Position, _textView.Options));
+            string remainder = state.Text.Substring(length);
+
+            _suppressNextSuggestion = true;
+            try
+            {
+                InsertAtCaret(_textView, _editorOperations, inserted);
+            }
+            finally
+            {
+                _suppressNextSuggestion = false;
+            }
+
+            var caret = _textView.Caret.Position.BufferPosition;
+            _state = new SuggestionState(remainder, caret);
+            _cache.Set(BuildCacheKey(caret.Snapshot, caret.Position), remainder);
+            ShowGhostText(remainder, caret);
+        }
+
+        /// <summary>Length of the leading whitespace plus the following non-whitespace chunk.</summary>
+        internal static int TakeWordLength(string text)
+        {
+            if (string.IsNullOrEmpty(text))
+                return 0;
+
+            int i = 0;
+            while (i < text.Length && char.IsWhiteSpace(text[i])) i++;
+            while (i < text.Length && !char.IsWhiteSpace(text[i])) i++;
+            return i;
+        }
+
+        /// <summary>Length up to and including the first newline; the whole text when single-line.</summary>
+        internal static int TakeLineLength(string text)
+        {
+            if (string.IsNullOrEmpty(text))
+                return 0;
+
+            int nl = text.IndexOf('\n');
+            return nl < 0 ? text.Length : nl + 1;
         }
 
         public void Dispose()
@@ -481,7 +582,7 @@ namespace LMLocal.Infrastructure.Autocompletions.InlineCompletion
             }
         }
 
-        private async Task GenerateSuggestionAsync()
+        private async Task GenerateSuggestionAsync(bool manual = false)
         {
             try
             {
@@ -512,7 +613,7 @@ namespace LMLocal.Infrastructure.Autocompletions.InlineCompletion
 
                 var caretLine = snapshot.GetLineFromPosition(caretPos);
                 string textAfterCaret = GetTextAfterCaret(snapshot, caretPos);
-                if (!string.IsNullOrWhiteSpace(textAfterCaret))
+                if (!manual && !string.IsNullOrWhiteSpace(textAfterCaret))
                 {
                     InternalLogger.Info("Caret NOT at end of line — skipping suggestion");
                     return;
