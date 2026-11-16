@@ -36,7 +36,7 @@ namespace LMLocal.Infrastructure.Autocompletions.InlineCompletion
         // false - lines 2..N rendered below the caret line via InterLineAdornmentTag (GhostLinesTagger).
         internal const bool CollapsedPreview = false;
 
-        internal const int MaxPrefixLength = 1200;
+        internal const int MaxPrefixLength = 600;
         internal const int MaxSuffixLength = 600;
         internal const int DefaultMaxTokens = 256;
         internal const int DefaultDebounceDelayMs = 300;
