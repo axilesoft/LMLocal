@@ -52,6 +52,7 @@ namespace LMLocal.Infrastructure.Autocompletions.InlineCompletion
 
         private int? _debounceDelayMs;
         private volatile bool _includeRecentLineContext = true;
+        private double _temperature;
         private SuggestionState _state;
         private IAutocompletionsService _autocompletionsService;
         private readonly IEditorOperations _editorOperations;
@@ -241,6 +242,7 @@ namespace LMLocal.Infrastructure.Autocompletions.InlineCompletion
                     var config = await configManager.GetAsync().ConfigureAwait(false);
                     _debounceDelayMs = config?.DebounceDelayMs ?? DefaultDebounceDelayMs;
                     _includeRecentLineContext = config?.IncludeRecentLineContext ?? true;
+                    _temperature = config?.Temperature ?? 0;
                     InlineCompletionBackend.Apply(config);
                 }
                 else
@@ -629,7 +631,12 @@ namespace LMLocal.Infrastructure.Autocompletions.InlineCompletion
 
                 var cacheKey = BuildCacheKey(snapshot, caretPos);
 
-                if (!_cache.TryGet(cacheKey, out string suggestion))
+                string suggestion = null;
+                bool cacheHit = !manual && _cache.TryGet(cacheKey, out suggestion);
+                if (manual)
+                    AutocompleteDebugLog.Trace("manual: cache bypassed");
+
+                if (!cacheHit)
                 {
                     var autocompletionsService = GetAutocompletionsService();
                     if (autocompletionsService == null) return;
@@ -637,7 +644,8 @@ namespace LMLocal.Infrastructure.Autocompletions.InlineCompletion
                     var parameters = CreateCompletionParameters(
                         prefix,
                         suffix,
-                        BuildRecentLineContext(GetFilePath(snapshot), snapshot.GetLineNumberFromPosition(caretPos), prefix, suffix, _includeRecentLineContext));
+                        BuildRecentLineContext(GetFilePath(snapshot), snapshot.GetLineNumberFromPosition(caretPos), prefix, suffix, _includeRecentLineContext),
+                        _temperature);
                     var raw = await autocompletionsService.GetCompletionAsync(parameters, ct).ConfigureAwait(false);
 
                     suggestion = PostProcessSuggestion(raw, suffix, caretLineIsBlank, textAfterCaret);
@@ -737,7 +745,7 @@ namespace LMLocal.Infrastructure.Autocompletions.InlineCompletion
         }
 
         /// <summary>FIM request parameters used by both backends.</summary>
-        internal static CompletionParameters CreateCompletionParameters(string prefix, string suffix, string recentLineContext = null)
+        internal static CompletionParameters CreateCompletionParameters(string prefix, string suffix, string recentLineContext = null, double temperature = 0)
         {
             return new CompletionParameters
             {
@@ -745,7 +753,7 @@ namespace LMLocal.Infrastructure.Autocompletions.InlineCompletion
                 Suffix = suffix,
                 RecentLineContext = recentLineContext,
                 MaxTokens = DefaultMaxTokens,
-                Temperature = 0,
+                Temperature = temperature,
                 Stop = StopSequences
             };
         }

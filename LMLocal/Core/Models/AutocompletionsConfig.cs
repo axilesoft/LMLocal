@@ -57,5 +57,11 @@ namespace LMLocal.Core.Models
         /// </summary>
         [JsonProperty("includeRecentLineContext")]
         public bool IncludeRecentLineContext { get; set; } = true;
+
+        /// <summary>
+        /// Sampling temperature for FIM requests. 0 = deterministic (retry gives the same result).
+        /// </summary>
+        [JsonProperty("temperature")]
+        public double Temperature { get; set; } = 0;
     }
 }
