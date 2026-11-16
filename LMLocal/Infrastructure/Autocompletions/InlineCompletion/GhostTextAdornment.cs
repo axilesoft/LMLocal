@@ -54,16 +54,6 @@ namespace LMLocal.Infrastructure.Autocompletions.InlineCompletion
                 return false;
             }
 
-            if (caretPoint.Position < line.End.Position)
-            {
-                string textAfter = caretPoint.Snapshot.GetText(caretPoint.Position, line.End.Position - caretPoint.Position);
-                if (!string.IsNullOrWhiteSpace(textAfter))
-                {
-                    Hide();
-                    return false;
-                }
-            }
-
             if (_textBlock == null)
             {
                 var props = _view.FormattedLineSource?.DefaultTextProperties;
@@ -75,15 +65,17 @@ namespace LMLocal.Infrastructure.Autocompletions.InlineCompletion
                 _textBlock = new TextBlock
                 {
                     IsHitTestVisible = false,
-                    Opacity = 0.65,
                     FontFamily = props.Typeface.FontFamily,
                     FontSize = props.FontRenderingEmSize,
                     FontStyle = FontStyles.Normal,
-                    FontWeight = FontWeights.Normal,
-                    Foreground = GetGhostBrush()
+                    FontWeight = FontWeights.Normal
                 };
             }
 
+            // Mid-line suggestions are drawn over the text that follows the caret, so the block
+            // needs the editor background to cover it instead of blending with it.
+            _textBlock.Background = _view.Background as Brush;
+            _textBlock.Foreground = GetTranslucentGhostBrush(_view);
             _textBlock.Text = text;
             _textBlock.Visibility = Visibility.Visible;
 
@@ -149,6 +141,19 @@ namespace LMLocal.Infrastructure.Autocompletions.InlineCompletion
                 return brightness < 128 ? LightBrush : DarkBrush;
             }
             return FallbackBrush;
+        }
+
+        /// <summary>Ghost brush with transparency, so an opaque background does not dim the text.</summary>
+        private static Brush GetTranslucentGhostBrush(IWpfTextView view)
+        {
+            var ghost = GetGhostBrush(view);
+            if (ghost is SolidColorBrush solid)
+            {
+                var translucent = new SolidColorBrush(Color.FromArgb(170, solid.Color.R, solid.Color.G, solid.Color.B));
+                translucent.Freeze();
+                return translucent;
+            }
+            return ghost;
         }
     }
 }
