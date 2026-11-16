@@ -36,8 +36,8 @@ namespace LMLocal.Infrastructure.Autocompletions.InlineCompletion
         // false - lines 2..N rendered below the caret line via InterLineAdornmentTag (GhostLinesTagger).
         internal const bool CollapsedPreview = false;
 
-        internal const int MaxPrefixLength = 300;
-        internal const int MaxSuffixLength = 400;
+        internal const int MaxPrefixLength = 1200;
+        internal const int MaxSuffixLength = 600;
         internal const int DefaultMaxTokens = 256;
         internal const int DefaultDebounceDelayMs = 300;
         internal static readonly string[] StopSequences = { "\n\n\n" };
@@ -694,10 +694,14 @@ namespace LMLocal.Infrastructure.Autocompletions.InlineCompletion
 
         /// <summary>
         /// Cuts a fragment of text before the caret with a maximum length of MaxPrefixLength.
+        /// Snaps to a line start so the model does not receive a mid-token fragment.
         /// </summary>
         internal static string GetPrefix(ITextSnapshot snapshot, int caretPos)
         {
             int start = Math.Max(0, caretPos - MaxPrefixLength);
+            if (start > 0)
+                start = snapshot.GetLineFromPosition(start).Start.Position;
+
             int length = caretPos - start;
             return length > 0 ? snapshot.GetText(start, length) : string.Empty;
         }
