@@ -51,5 +51,11 @@ namespace LMLocal.Core.Models
         /// </summary>
         [JsonProperty("singleLinePreview")]
         public bool SingleLinePreview { get; set; } = true;
+
+        /// <summary>
+        /// Include the "recently visited line" annotation in FIM requests. Disable for a pure-FIM A/B test.
+        /// </summary>
+        [JsonProperty("includeRecentLineContext")]
+        public bool IncludeRecentLineContext { get; set; } = true;
     }
 }

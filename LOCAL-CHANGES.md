@@ -59,6 +59,12 @@ FIM 自动补全原先只发送光标前 300 字符 / 后 400 字符。当用户
 
 实现方式：`Alt+'` 是 VSCT 命令 + 键盘绑定；`Ctrl+Right`/`Ctrl+Down` 通过 `IOleCommandTarget` 过滤器只拦截 `WORDNEXT`/`SCROLLDN`，有建议时消费、无建议时透传。
 
+### FIM A/B 结论（Kestrel）
+
+- GGUF 词表里有 `<|fim_prefix|>/<|fim_suffix|>/<|fim_middle|>`，但 Kestrel 没有做 FIM 训练：手工 FIM prompt 和 llama-server 原生 `/infill` 都输出整段函数（重复 prefix+suffix），不会只填中间。
+- 普通 prefix 补全能正确续写（参数名/表达式）；而 `includeRecentLineContext=true` 时，`recently visited` 行反而会把其中的类型（如 `irr::scene::PhyObj* po`）误当成参数类型，污染补全。
+- 因此 Kestrel（alias `kestrel`）不启用 FIM token，按普通补全处理；本机配置已设 `includeRecentLineContext=false`。其它模型仍可通过该配置项自行开关。
+
 ### 改动文件
 
 | 文件 | 作用 |

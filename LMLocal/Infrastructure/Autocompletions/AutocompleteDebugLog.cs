@@ -16,7 +16,7 @@ namespace LMLocal.Infrastructure.Autocompletions
         /// <summary>Disabled by unit tests to keep the log free of test traffic.</summary>
         internal static bool Enabled { get; set; } = true;
 
-        internal static void Write(string modelId, string prompt, string response)
+        internal static void Write(string modelId, string prompt, string response, int maxTokens, double temperature, string[] stop)
         {
             if (!Enabled)
                 return;
@@ -24,7 +24,9 @@ namespace LMLocal.Infrastructure.Autocompletions
             try
             {
                 var sb = new StringBuilder();
-                sb.AppendLine("===== " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff") + " | " + modelId + " =====");
+                sb.AppendLine("===== " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff") + " | " + modelId +
+                              " | max_tokens=" + maxTokens + " temp=" + temperature +
+                              " stop=" + (stop == null ? "[]" : "[" + string.Join(",", stop) + "]") + " =====");
                 sb.AppendLine("----- prompt -----");
                 sb.AppendLine(prompt ?? string.Empty);
                 sb.AppendLine("----- response -----");

@@ -199,7 +199,8 @@ namespace LMLocal.Infrastructure.Autocompletions.InlineCompletion
                     string prefix = SuggestionTagger.GetPrefix(snapshot, caretPos);
                     string suffix = SuggestionTagger.GetSuffix(snapshot, caretPos);
                     string recentLineContext = SuggestionTagger.BuildRecentLineContext(
-                        SuggestionTagger.GetFilePath(snapshot), snapshot.GetLineNumberFromPosition(caretPos), prefix, suffix);
+                        SuggestionTagger.GetFilePath(snapshot), snapshot.GetLineNumberFromPosition(caretPos), prefix, suffix,
+                        config?.IncludeRecentLineContext ?? true);
                     bool caretLineIsBlank = string.IsNullOrWhiteSpace(snapshot.GetLineFromPosition(caretPos).GetText());
                     string cacheKey = SuggestionTagger.BuildCacheKey(snapshot, caretPos);
 

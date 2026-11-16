@@ -78,14 +78,22 @@ namespace LMLocal.Application.Autocompletions
 
             var (prefixToken, suffixToken, middleToken) = FimTemplate.GetTokens(config.ModelId);
 
-            // The visited-line annotation goes inside the FIM prefix: FIM models only see prefix/suffix.
-            var prompt = string.IsNullOrEmpty(parameters.RecentLineContext)
-                ? parameters.Prompt
-                : parameters.RecentLineContext + "\n" + parameters.Prompt;
-
-            var finalPrompt = string.IsNullOrEmpty(prefixToken)
-                ? prompt
-                : $"{prefixToken}{prompt}{suffixToken}{parameters.Suffix}{middleToken}";
+            // FIM models: the visited-line annotation stays outside the FIM markers so it cannot
+            // pollute the prefix. Non-FIM models keep it in front of the prompt.
+            string finalPrompt;
+            if (!string.IsNullOrEmpty(prefixToken))
+            {
+                var fenced = $"{prefixToken}{parameters.Prompt}{suffixToken}{parameters.Suffix}{middleToken}";
+                finalPrompt = string.IsNullOrEmpty(parameters.RecentLineContext)
+                    ? fenced
+                    : parameters.RecentLineContext + "\n" + fenced;
+            }
+            else
+            {
+                finalPrompt = string.IsNullOrEmpty(parameters.RecentLineContext)
+                    ? parameters.Prompt
+                    : parameters.RecentLineContext + "\n" + parameters.Prompt;
+            }
 
             var context = new CompletionContext
             {
@@ -102,7 +110,7 @@ namespace LMLocal.Application.Autocompletions
             };
 
             var result = await GetCompletionDirectAsync(context, cancellationToken).ConfigureAwait(false);
-            AutocompleteDebugLog.Write(config.ModelId, finalPrompt, result);
+            AutocompleteDebugLog.Write(config.ModelId, finalPrompt, result, parameters.MaxTokens, parameters.Temperature, parameters.Stop);
             return FimTemplate.TrimFimArtifacts(result, config.ModelId);
         }
 
@@ -185,13 +193,12 @@ namespace LMLocal.Application.Autocompletions
             }
 
             /// <summary>
-            /// Qwen-style FIM tokens (Qwen, CodeGemma, Kestrel). Other known families keep their own tokens.
+            /// Qwen-style FIM tokens. Kestrel is excluded on purpose: its vocabulary contains the FIM
+            /// tokens but the model is not FIM-trained (manual FIM and /infill both repeat the whole function).
             /// </summary>
             private static bool UsesQwenStyleTokens(string modelLower)
             {
-                return modelLower.Contains("qwen") ||
-                       modelLower.Contains("codegemma") ||
-                       modelLower.Contains("kestrel");
+                return modelLower.Contains("qwen") || modelLower.Contains("codegemma");
             }
 
             /// <summary>

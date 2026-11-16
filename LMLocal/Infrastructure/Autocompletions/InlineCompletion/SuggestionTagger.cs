@@ -51,6 +51,7 @@ namespace LMLocal.Infrastructure.Autocompletions.InlineCompletion
         private readonly ICompletionBroker _completionBroker;
 
         private int? _debounceDelayMs;
+        private volatile bool _includeRecentLineContext = true;
         private SuggestionState _state;
         private IAutocompletionsService _autocompletionsService;
         private readonly IEditorOperations _editorOperations;
@@ -239,6 +240,7 @@ namespace LMLocal.Infrastructure.Autocompletions.InlineCompletion
                 {
                     var config = await configManager.GetAsync().ConfigureAwait(false);
                     _debounceDelayMs = config?.DebounceDelayMs ?? DefaultDebounceDelayMs;
+                    _includeRecentLineContext = config?.IncludeRecentLineContext ?? true;
                     InlineCompletionBackend.Apply(config);
                 }
                 else
@@ -631,7 +633,7 @@ namespace LMLocal.Infrastructure.Autocompletions.InlineCompletion
                     var parameters = CreateCompletionParameters(
                         prefix,
                         suffix,
-                        BuildRecentLineContext(GetFilePath(snapshot), snapshot.GetLineNumberFromPosition(caretPos), prefix, suffix));
+                        BuildRecentLineContext(GetFilePath(snapshot), snapshot.GetLineNumberFromPosition(caretPos), prefix, suffix, _includeRecentLineContext));
                     var raw = await autocompletionsService.GetCompletionAsync(parameters, ct).ConfigureAwait(false);
 
                     suggestion = PostProcessSuggestion(raw, suffix, caretLineIsBlank, textAfterCaret);
@@ -730,10 +732,12 @@ namespace LMLocal.Infrastructure.Autocompletions.InlineCompletion
             };
         }
 
-        /// <summary>Comment annotation for the last visited caret line, or null when there is none to add.</summary>
-        internal static string BuildRecentLineContext(string filePath, int zeroBasedLineNumber, string prefix, string suffix)
+        /// <summary>Comment annotation for the last visited caret line, or null when disabled/absent.</summary>
+        internal static string BuildRecentLineContext(string filePath, int zeroBasedLineNumber, string prefix, string suffix, bool include = true)
         {
-            return RecentCaretContext.BuildAnnotation(filePath, zeroBasedLineNumber + 1, prefix, suffix);
+            return include
+                ? RecentCaretContext.BuildAnnotation(filePath, zeroBasedLineNumber + 1, prefix, suffix)
+                : null;
         }
 
         /// <summary>

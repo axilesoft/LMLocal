@@ -48,7 +48,6 @@ namespace LMLocal.Tests.Unit.Services
         [TestCase("Qwen2.5-Coder-7B", "<|fim_prefix|>", "<|fim_suffix|>", "<|fim_middle|>")]
         [TestCase("codegemma-7b", "<|fim_prefix|>", "<|fim_suffix|>", "<|fim_middle|>")]
         [TestCase("CodeGemma-2b", "<|fim_prefix|>", "<|fim_suffix|>", "<|fim_middle|>")]
-        [TestCase(@"models\Kestrel-4B-Coder.i1-Q6_K.gguf", "<|fim_prefix|>", "<|fim_suffix|>", "<|fim_middle|>")]
         public void GetTokens_QwenAndCodeGemma_ReturnsCorrectFimTokens(
             string modelId, string expectedPrefix, string expectedSuffix, string expectedMiddle)
         {
@@ -105,6 +104,8 @@ namespace LMLocal.Tests.Unit.Services
         [TestCase("unknown-model")]
         [TestCase("llama-3.1-8b")]
         [TestCase("mistral-7b")]
+        [TestCase("kestrel")]
+        [TestCase(@"models\Kestrel-4B-Coder.i1-Q6_K.gguf")]
         public void GetTokens_UnknownOrEmptyModelId_ReturnsEmptyTokens(string modelId)
         {
             var (prefix, suffix, middle) = AutocompletionsService.FimTemplate.GetTokens(modelId);
@@ -249,7 +250,7 @@ namespace LMLocal.Tests.Unit.Services
         }
 
         [Test]
-        public async Task GetCompletionAsync_RecentLineContext_IsPrependedInsideFimPrefix()
+        public async Task GetCompletionAsync_RecentLineContext_StaysOutsideFimMarkers()
         {
             _configManagerMock
                 .Setup(c => c.GetAsync(It.IsAny<CancellationToken>()))
@@ -295,7 +296,7 @@ namespace LMLocal.Tests.Unit.Services
 
             Assert.That(captured, Is.Not.Null);
             Assert.That(captured.Prompt, Is.EqualTo(
-                "<|fim_prefix|>// recently visited Utils.cs:42: var joint = CreateJoint();\n    ApplyFor<|fim_suffix|>\n}<|fim_middle|>"));
+                "// recently visited Utils.cs:42: var joint = CreateJoint();\n<|fim_prefix|>    ApplyFor<|fim_suffix|>\n}<|fim_middle|>"));
             Assert.That(captured.Suffix, Is.Empty);
         }
 
