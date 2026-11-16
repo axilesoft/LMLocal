@@ -351,6 +351,7 @@ namespace LMLocal.Infrastructure.Autocompletions.InlineCompletion
             if (_disposed)
                 return;
 
+            AutocompleteDebugLog.Trace("manual: TriggerSuggestion");
             CancelDebounce();
             CancelOperation();
             _ = GenerateSuggestionAsync(manual: true);
@@ -605,10 +606,13 @@ namespace LMLocal.Infrastructure.Autocompletions.InlineCompletion
                 int caretPos = _textView.Caret.Position.BufferPosition.Position;
                 if (caretPos > snapshot.Length) caretPos = snapshot.Length;
 
-                if (InlineCompletionBackend.IsNative) return;
-                if (!_textView.Selection.IsEmpty) return;
+                if (InlineCompletionBackend.IsNative) { if (manual) AutocompleteDebugLog.Trace("manual: native backend"); return; }
+                if (!_textView.Selection.IsEmpty) { if (manual) AutocompleteDebugLog.Trace("manual: selection not empty"); return; }
                 if (_textView.TextBuffer.IsReadOnly(caretPos))
+                {
+                    if (manual) AutocompleteDebugLog.Trace("manual: read-only");
                     return;
+                }
 
                 string prefix = GetPrefix(snapshot, caretPos);
                 string suffix = GetSuffix(snapshot, caretPos);
@@ -638,8 +642,14 @@ namespace LMLocal.Infrastructure.Autocompletions.InlineCompletion
 
                     suggestion = PostProcessSuggestion(raw, suffix, caretLineIsBlank, textAfterCaret);
 
-                    if (!string.IsNullOrEmpty(suggestion))
+                    if (string.IsNullOrEmpty(suggestion))
+                    {
+                        if (manual) AutocompleteDebugLog.Trace("manual: post-processed empty, rawLen=" + (raw?.Length ?? 0));
+                    }
+                    else
+                    {
                         _cache.Set(cacheKey, suggestion);
+                    }
                 }
 
                 await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(ct);
@@ -654,16 +664,19 @@ namespace LMLocal.Infrastructure.Autocompletions.InlineCompletion
                 {
                     InternalLogger.Info($"Context changed: caret {caretPos}->{currentCaretPos}, " +
                                         $"snapshot {snapshot.Version.VersionNumber}->{currentSnapshot.Version.VersionNumber}");
+                    if (manual) AutocompleteDebugLog.Trace("manual: stale caret/snapshot");
                     return;
                 }
 
                 if (!string.IsNullOrEmpty(suggestion) && _suggestionService?.GetDisplayedProposal(_textView) != null)
                 {
+                    if (manual) AutocompleteDebugLog.Trace("manual: VS proposal active");
                     return;
                 }
 
                 if (!string.IsNullOrEmpty(suggestion) && IsCompletionActive())
                 {
+                    if (manual) AutocompleteDebugLog.Trace("manual: completion active");
                     return;
                 }
 
@@ -675,6 +688,7 @@ namespace LMLocal.Infrastructure.Autocompletions.InlineCompletion
 
                     _state = new SuggestionState(suggestion, caretPoint);
 
+                    if (manual) AutocompleteDebugLog.Trace("manual: shown len=" + suggestion.Length);
                     InternalLogger.Info($"Suggestion set: text='{suggestion}', caret={caretPoint}");
                 }
                 else
@@ -757,12 +771,35 @@ namespace LMLocal.Infrastructure.Autocompletions.InlineCompletion
 
             if (!string.IsNullOrWhiteSpace(textAfterCaret))
             {
-                suggestion = TrimClosingOverlap(FirstLine(suggestion), textAfterCaret);
+                suggestion = TrimClosingOverlap(FirstNonEmptyLine(suggestion), textAfterCaret);
                 if (string.IsNullOrWhiteSpace(suggestion))
                     return null;
             }
 
             return suggestion;
+        }
+
+        /// <summary>First line that is not blank (models often start a FIM middle with a newline).</summary>
+        internal static string FirstNonEmptyLine(string text)
+        {
+            if (string.IsNullOrEmpty(text))
+                return null;
+
+            int start = 0;
+            while (start < text.Length)
+            {
+                int nl = text.IndexOf('\n', start);
+                int end = nl < 0 ? text.Length : nl;
+                string line = text.Substring(start, end - start).TrimEnd('\r');
+                if (!string.IsNullOrWhiteSpace(line))
+                    return line;
+
+                if (nl < 0)
+                    break;
+                start = nl + 1;
+            }
+
+            return null;
         }
 
         /// <summary>First line of the text (without '\n').</summary>

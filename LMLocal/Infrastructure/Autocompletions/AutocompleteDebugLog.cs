@@ -16,6 +16,23 @@ namespace LMLocal.Infrastructure.Autocompletions
         /// <summary>Disabled by unit tests to keep the log free of test traffic.</summary>
         internal static bool Enabled { get; set; } = true;
 
+        internal static void Trace(string message)
+        {
+            if (!Enabled || string.IsNullOrEmpty(message))
+                return;
+
+            try
+            {
+                lock (Gate)
+                {
+                    File.AppendAllText(LogPath, "[" + DateTime.Now.ToString("HH:mm:ss.fff") + "] " + message + "\n", Encoding.UTF8);
+                }
+            }
+            catch (Exception)
+            {
+            }
+        }
+
         internal static void Write(string modelId, string prompt, string response, int maxTokens, double temperature, string[] stop)
         {
             if (!Enabled)

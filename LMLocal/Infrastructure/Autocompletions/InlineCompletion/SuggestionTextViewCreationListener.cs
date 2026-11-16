@@ -2,6 +2,7 @@ using System;
 using System.ComponentModel.Composition;
 using System.Windows.Input;
 using LMLocal.Core.Common;
+using LMLocal.Infrastructure.Autocompletions;
 using Microsoft.VisualStudio.Editor;
 using Microsoft.VisualStudio.Language.Intellisense;
 using Microsoft.VisualStudio.Language.Intellisense.AsyncCompletion;
@@ -98,6 +99,8 @@ namespace LMLocal.Infrastructure.Autocompletions.InlineCompletion
 
                     if (textView.HasAggregateFocus)
                     {
+                        SuggestionTagger.SetFocused(tagger);
+
                         var oldPoint = e.OldPosition.BufferPosition;
                         if (oldPoint.GetContainingLine().LineNumber != e.NewPosition.BufferPosition.GetContainingLine().LineNumber)
                             RecentCaretContext.Record(oldPoint.Snapshot, oldPoint.Position);
@@ -137,6 +140,7 @@ namespace LMLocal.Infrastructure.Autocompletions.InlineCompletion
                     var key = e.Key == Key.System ? e.SystemKey : e.Key;
                     if (key == Key.OemQuotes && Keyboard.Modifiers == ModifierKeys.Alt)
                     {
+                        AutocompleteDebugLog.Trace("manual: Alt+' key");
                         tagger.TriggerSuggestion();
                         e.Handled = true;
                     }

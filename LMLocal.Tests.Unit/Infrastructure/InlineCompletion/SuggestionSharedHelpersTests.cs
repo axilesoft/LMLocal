@@ -90,6 +90,23 @@ namespace LMLocal.Tests.Unit.Infrastructure.InlineCompletion
             Assert.That(r, Is.Null);
         }
 
+        [Test]
+        public void PostProcess_TextAfterCaret_LeadingBlankLinesUseFirstNonEmptyLine()
+        {
+            var r = SuggestionTagger.PostProcessSuggestion("\n\n  foo)\nnext();", ")", caretLineIsBlank: false, textAfterCaret: ")");
+            Assert.That(r, Is.EqualTo("  foo"));
+        }
+
+        [TestCase("a\n\nb", "a")]
+        [TestCase("\n\n  foo", "  foo")]
+        [TestCase("   \n\t\n", null)]
+        [TestCase("", null)]
+        [TestCase(null, null)]
+        public void FirstNonEmptyLine(string text, string expected)
+        {
+            Assert.That(SuggestionTagger.FirstNonEmptyLine(text), Is.EqualTo(expected));
+        }
+
         // ---- TryConsume at line indentation (typing in virtual space after Enter) ----
 
         [TestCase("        f", "foo();", "oo();")]

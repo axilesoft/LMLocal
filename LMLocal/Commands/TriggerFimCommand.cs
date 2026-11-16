@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel.Design;
+using LMLocal.Infrastructure.Autocompletions;
 using LMLocal.Infrastructure.Autocompletions.InlineCompletion;
 using Microsoft.VisualStudio.Shell;
 using Task = System.Threading.Tasks.Task;
@@ -34,6 +35,7 @@ namespace LMLocal
         private void Execute(object sender, EventArgs e)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
+            AutocompleteDebugLog.Trace("manual: command invoked, focused=" + (SuggestionTagger.Focused != null));
             SuggestionTagger.Focused?.TriggerSuggestion();
         }
     }
