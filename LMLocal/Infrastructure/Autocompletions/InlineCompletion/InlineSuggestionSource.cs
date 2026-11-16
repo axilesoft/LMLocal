@@ -211,7 +211,7 @@ namespace LMLocal.Infrastructure.Autocompletions.InlineCompletion
                             return null;
 
                         var raw = await service.GetCompletionAsync(
-                            SuggestionTagger.CreateCompletionParameters(prefix, suffix, recentLineContext, config?.Temperature ?? 0), ct).ConfigureAwait(false);
+                            SuggestionTagger.CreateCompletionParameters(prefix, suffix, recentLineContext, config?.Temperature ?? 0.2), ct).ConfigureAwait(false);
 
                         suggestion = SuggestionTagger.PostProcessSuggestion(raw, suffix, caretLineIsBlank, textAfterCaret);
                         if (string.IsNullOrEmpty(suggestion))

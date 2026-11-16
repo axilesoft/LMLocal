@@ -52,7 +52,7 @@ namespace LMLocal.Infrastructure.Autocompletions.InlineCompletion
 
         private int? _debounceDelayMs;
         private volatile bool _includeRecentLineContext = true;
-        private double _temperature;
+        private double _temperature = 0.2;
         private SuggestionState _state;
         private IAutocompletionsService _autocompletionsService;
         private readonly IEditorOperations _editorOperations;
@@ -242,7 +242,7 @@ namespace LMLocal.Infrastructure.Autocompletions.InlineCompletion
                     var config = await configManager.GetAsync().ConfigureAwait(false);
                     _debounceDelayMs = config?.DebounceDelayMs ?? DefaultDebounceDelayMs;
                     _includeRecentLineContext = config?.IncludeRecentLineContext ?? true;
-                    _temperature = config?.Temperature ?? 0;
+                    _temperature = config?.Temperature ?? 0.2;
                     InlineCompletionBackend.Apply(config);
                 }
                 else
@@ -745,7 +745,7 @@ namespace LMLocal.Infrastructure.Autocompletions.InlineCompletion
         }
 
         /// <summary>FIM request parameters used by both backends.</summary>
-        internal static CompletionParameters CreateCompletionParameters(string prefix, string suffix, string recentLineContext = null, double temperature = 0)
+        internal static CompletionParameters CreateCompletionParameters(string prefix, string suffix, string recentLineContext = null, double temperature = 0.2)
         {
             return new CompletionParameters
             {

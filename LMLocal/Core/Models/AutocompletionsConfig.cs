@@ -62,6 +62,6 @@ namespace LMLocal.Core.Models
         /// Sampling temperature for FIM requests. 0 = deterministic (retry gives the same result).
         /// </summary>
         [JsonProperty("temperature")]
-        public double Temperature { get; set; } = 0;
+        public double Temperature { get; set; } = 0.2;
     }
 }
