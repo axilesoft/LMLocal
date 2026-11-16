@@ -185,19 +185,13 @@ namespace LMLocal.Application.Autocompletions
             }
 
             /// <summary>
-            /// Qwen-style FIM tokens, including Kestrel and models exposed under a generic "coder" alias.
-            /// Known other families (starcoder/refact/stable-code/deepseek) keep their own tokens.
+            /// Qwen-style FIM tokens (Qwen, CodeGemma, Kestrel). Other known families keep their own tokens.
             /// </summary>
             private static bool UsesQwenStyleTokens(string modelLower)
             {
-                if (modelLower.Contains("qwen") || modelLower.Contains("codegemma") || modelLower.Contains("kestrel"))
-                    return true;
-
-                if (modelLower.Contains("starcoder") || modelLower.Contains("refact") ||
-                    modelLower.Contains("stable-code") || modelLower.Contains("deepseek"))
-                    return false;
-
-                return modelLower.Contains("coder");
+                return modelLower.Contains("qwen") ||
+                       modelLower.Contains("codegemma") ||
+                       modelLower.Contains("kestrel");
             }
 
             /// <summary>
