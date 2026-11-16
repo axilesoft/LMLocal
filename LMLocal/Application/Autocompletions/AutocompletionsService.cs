@@ -172,7 +172,7 @@ namespace LMLocal.Application.Autocompletions
 
                 var modelLower = modelId.ToLowerInvariant();
 
-                if (modelLower.Contains("qwen") || modelLower.Contains("codegemma") || modelLower.Contains("kestrel"))
+                if (UsesQwenStyleTokens(modelLower))
                     return ("<|fim_prefix|>", "<|fim_suffix|>", "<|fim_middle|>");
 
                 if (modelLower.Contains("starcoder") || modelLower.Contains("refact") || modelLower.Contains("stable-code"))
@@ -185,6 +185,22 @@ namespace LMLocal.Application.Autocompletions
             }
 
             /// <summary>
+            /// Qwen-style FIM tokens, including Kestrel and models exposed under a generic "coder" alias.
+            /// Known other families (starcoder/refact/stable-code/deepseek) keep their own tokens.
+            /// </summary>
+            private static bool UsesQwenStyleTokens(string modelLower)
+            {
+                if (modelLower.Contains("qwen") || modelLower.Contains("codegemma") || modelLower.Contains("kestrel"))
+                    return true;
+
+                if (modelLower.Contains("starcoder") || modelLower.Contains("refact") ||
+                    modelLower.Contains("stable-code") || modelLower.Contains("deepseek"))
+                    return false;
+
+                return modelLower.Contains("coder");
+            }
+
+            /// <summary>
             /// Strips known FIM artifact tokens from the end of the generated output.
             /// </summary>
             public static string TrimFimArtifacts(string output, string modelId)
@@ -194,7 +210,7 @@ namespace LMLocal.Application.Autocompletions
 
                 var modelLower = modelId.ToLowerInvariant();
 
-                if (modelLower.Contains("qwen") || modelLower.Contains("codegemma") || modelLower.Contains("kestrel"))
+                if (UsesQwenStyleTokens(modelLower))
                 {
                     var match = SpecialMarker.Match(output);
                     if (match.Success)

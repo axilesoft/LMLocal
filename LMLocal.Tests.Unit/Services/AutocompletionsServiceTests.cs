@@ -49,6 +49,7 @@ namespace LMLocal.Tests.Unit.Services
         [TestCase("codegemma-7b", "<|fim_prefix|>", "<|fim_suffix|>", "<|fim_middle|>")]
         [TestCase("CodeGemma-2b", "<|fim_prefix|>", "<|fim_suffix|>", "<|fim_middle|>")]
         [TestCase(@"models\Kestrel-4B-Coder.i1-Q6_K.gguf", "<|fim_prefix|>", "<|fim_suffix|>", "<|fim_middle|>")]
+        [TestCase("coder", "<|fim_prefix|>", "<|fim_suffix|>", "<|fim_middle|>")]
         public void GetTokens_QwenAndCodeGemma_ReturnsCorrectFimTokens(
             string modelId, string expectedPrefix, string expectedSuffix, string expectedMiddle)
         {
