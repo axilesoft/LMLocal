@@ -198,6 +198,8 @@ namespace LMLocal.Infrastructure.Autocompletions.InlineCompletion
 
                     string prefix = SuggestionTagger.GetPrefix(snapshot, caretPos);
                     string suffix = SuggestionTagger.GetSuffix(snapshot, caretPos);
+                    string recentLineContext = SuggestionTagger.BuildRecentLineContext(
+                        SuggestionTagger.GetFilePath(snapshot), snapshot.GetLineNumberFromPosition(caretPos), prefix, suffix);
                     bool caretLineIsBlank = string.IsNullOrWhiteSpace(snapshot.GetLineFromPosition(caretPos).GetText());
                     string cacheKey = SuggestionTagger.BuildCacheKey(snapshot, caretPos);
 
@@ -208,7 +210,7 @@ namespace LMLocal.Infrastructure.Autocompletions.InlineCompletion
                             return null;
 
                         var raw = await service.GetCompletionAsync(
-                            SuggestionTagger.CreateCompletionParameters(prefix, suffix), ct).ConfigureAwait(false);
+                            SuggestionTagger.CreateCompletionParameters(prefix, suffix, recentLineContext), ct).ConfigureAwait(false);
 
                         suggestion = SuggestionTagger.PostProcessSuggestion(raw, suffix, caretLineIsBlank, textAfterCaret);
                         if (string.IsNullOrEmpty(suggestion))

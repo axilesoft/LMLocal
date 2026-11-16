@@ -246,6 +246,105 @@ namespace LMLocal.Tests.Unit.Services
         }
 
         [Test]
+        public async Task GetCompletionAsync_RecentLineContext_IsPrependedInsideFimPrefix()
+        {
+            _configManagerMock
+                .Setup(c => c.GetAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new AutocompletionsConfig
+                {
+                    Enabled = true,
+                    ModelId = "qwen-2.5-coder",
+                    ProviderId = 99,
+                    ProviderType = "openai"
+                });
+
+            _providersConfigManagerMock
+                .Setup(p => p.GetAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ProvidersConfigFile
+                {
+                    DefaultProviders = new List<CustomProvider>
+                    {
+                        new CustomProvider
+                        {
+                            Id = 99,
+                            ProviderType = "openai",
+                            CustomBaseUrl = "http://localhost:1234",
+                            CustomApiKey = "test-key"
+                        }
+                    }
+                });
+
+            CompletionContext captured = null;
+            _openApiAdapterMock
+                .Setup(a => a.SendCompletionAsync(It.IsAny<CompletionContext>(), It.IsAny<CancellationToken>()))
+                .Callback<CompletionContext, CancellationToken>((c, _) => captured = c)
+                .ReturnsAsync("suggestion");
+
+            var parameters = new CompletionParameters
+            {
+                Prompt = "    ApplyFor",
+                Suffix = "\n}",
+                RecentLineContext = "// recently visited Utils.cs:42: var joint = CreateJoint();",
+                MaxTokens = 80
+            };
+
+            await _service.GetCompletionAsync(parameters, CancellationToken.None);
+
+            Assert.That(captured, Is.Not.Null);
+            Assert.That(captured.Prompt, Is.EqualTo(
+                "<|fim_prefix|>// recently visited Utils.cs:42: var joint = CreateJoint();\n    ApplyFor<|fim_suffix|>\n}<|fim_middle|>"));
+            Assert.That(captured.Suffix, Is.Empty);
+        }
+
+        [Test]
+        public async Task GetCompletionAsync_NoRecentLineContext_PromptUnchanged()
+        {
+            _configManagerMock
+                .Setup(c => c.GetAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new AutocompletionsConfig
+                {
+                    Enabled = true,
+                    ModelId = "llama-3.1-8b",
+                    ProviderId = 99,
+                    ProviderType = "openai"
+                });
+
+            _providersConfigManagerMock
+                .Setup(p => p.GetAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ProvidersConfigFile
+                {
+                    DefaultProviders = new List<CustomProvider>
+                    {
+                        new CustomProvider
+                        {
+                            Id = 99,
+                            ProviderType = "openai",
+                            CustomBaseUrl = "http://localhost:1234",
+                            CustomApiKey = "test-key"
+                        }
+                    }
+                });
+
+            CompletionContext captured = null;
+            _openApiAdapterMock
+                .Setup(a => a.SendCompletionAsync(It.IsAny<CompletionContext>(), It.IsAny<CancellationToken>()))
+                .Callback<CompletionContext, CancellationToken>((c, _) => captured = c)
+                .ReturnsAsync("suggestion");
+
+            var parameters = new CompletionParameters
+            {
+                Prompt = "    ApplyFor",
+                Suffix = "\n}",
+                MaxTokens = 80
+            };
+
+            await _service.GetCompletionAsync(parameters, CancellationToken.None);
+
+            Assert.That(captured, Is.Not.Null);
+            Assert.That(captured.Prompt, Is.EqualTo("    ApplyFor"));
+        }
+
+        [Test]
         public async Task GetCompletionAsync_WithStarCoderModel_DoesNotStripAnything()
         {
             var config = new AutocompletionsConfig

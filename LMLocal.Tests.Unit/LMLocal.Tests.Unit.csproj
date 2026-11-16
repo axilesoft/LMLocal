@@ -129,6 +129,7 @@
     <Compile Include="Infrastructure\ConnectionLimitsTests.cs" />
     <Compile Include="Infrastructure\HttpClientWrapperTests.cs" />
     <Compile Include="Infrastructure\InlineCompletion\SuggestionAcceptPreviewTests.cs" />
+    <Compile Include="Infrastructure\InlineCompletion\RecentCaretContextTests.cs" />
     <Compile Include="Infrastructure\InlineCompletion\SuggestionPostProcessMultilineTests.cs" />
     <Compile Include="Infrastructure\InlineCompletion\SuggestionSharedHelpersTests.cs" />
     <Compile Include="Infrastructure\InlineCompletion\SuggestionTypeThroughTests.cs" />

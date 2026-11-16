@@ -133,16 +133,17 @@ namespace LMLocal.Infrastructure.Autocompletions.InlineCompletion
         }
 
         /// <summary>
-        /// Builds a cache key from file path, caret position, and prefix/suffix text.
+        /// Builds a cache key from file path, caret position, prefix/suffix text, and the recent-line context.
         /// </summary>
         internal static string BuildKey(
             string filePath,
             int caretLine,
             int caretColumn,
             string prefix,
-            string suffix)
+            string suffix,
+            string recentLineContext = null)
         {
-            return $"{filePath ?? string.Empty}\0{caretLine}\0{caretColumn}\0{prefix ?? string.Empty}\0{suffix ?? string.Empty}";
+            return $"{filePath ?? string.Empty}\0{caretLine}\0{caretColumn}\0{prefix ?? string.Empty}\0{suffix ?? string.Empty}\0{recentLineContext ?? string.Empty}";
         }
     }
 }

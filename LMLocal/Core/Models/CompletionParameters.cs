@@ -13,6 +13,10 @@ namespace LMLocal.Core.Models
         [JsonProperty("suffix")]
         public string Suffix { get; set; }
 
+        /// <summary>Optional one-line comment with the content of the last visited caret line.</summary>
+        [JsonProperty("recentLineContext")]
+        public string RecentLineContext { get; set; }
+
         [JsonProperty("maxTokens")]
         public int MaxTokens { get; set; }
 

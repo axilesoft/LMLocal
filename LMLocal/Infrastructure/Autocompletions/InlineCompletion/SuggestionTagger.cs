@@ -527,7 +527,10 @@ namespace LMLocal.Infrastructure.Autocompletions.InlineCompletion
                     var autocompletionsService = GetAutocompletionsService();
                     if (autocompletionsService == null) return;
 
-                    var parameters = CreateCompletionParameters(prefix, suffix);
+                    var parameters = CreateCompletionParameters(
+                        prefix,
+                        suffix,
+                        BuildRecentLineContext(GetFilePath(snapshot), snapshot.GetLineNumberFromPosition(caretPos), prefix, suffix));
                     var raw = await autocompletionsService.GetCompletionAsync(parameters, ct).ConfigureAwait(false);
 
                     suggestion = PostProcessSuggestion(raw, suffix, caretLineIsBlank, textAfterCaret);
@@ -613,16 +616,23 @@ namespace LMLocal.Infrastructure.Autocompletions.InlineCompletion
         }
 
         /// <summary>FIM request parameters used by both backends.</summary>
-        internal static CompletionParameters CreateCompletionParameters(string prefix, string suffix)
+        internal static CompletionParameters CreateCompletionParameters(string prefix, string suffix, string recentLineContext = null)
         {
             return new CompletionParameters
             {
                 Prompt = prefix,
                 Suffix = suffix,
+                RecentLineContext = recentLineContext,
                 MaxTokens = DefaultMaxTokens,
                 Temperature = 0,
                 Stop = StopSequences
             };
+        }
+
+        /// <summary>Comment annotation for the last visited caret line, or null when there is none to add.</summary>
+        internal static string BuildRecentLineContext(string filePath, int zeroBasedLineNumber, string prefix, string suffix)
+        {
+            return RecentCaretContext.BuildAnnotation(filePath, zeroBasedLineNumber + 1, prefix, suffix);
         }
 
         /// <summary>
@@ -761,7 +771,10 @@ namespace LMLocal.Infrastructure.Autocompletions.InlineCompletion
             var filePath = GetFilePath(snapshot);
             int lineNumber = snapshot.GetLineNumberFromPosition(caretPos);
             int column = caretPos - snapshot.GetLineFromPosition(caretPos).Start.Position;
-            return CompletionCache.BuildKey(filePath, lineNumber, column, GetPrefix(snapshot, caretPos), GetSuffix(snapshot, caretPos));
+            string prefix = GetPrefix(snapshot, caretPos);
+            string suffix = GetSuffix(snapshot, caretPos);
+            return CompletionCache.BuildKey(filePath, lineNumber, column, prefix, suffix,
+                BuildRecentLineContext(filePath, lineNumber, prefix, suffix));
         }
 
         /// <summary>

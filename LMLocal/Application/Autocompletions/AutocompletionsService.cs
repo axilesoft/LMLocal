@@ -78,9 +78,14 @@ namespace LMLocal.Application.Autocompletions
 
             var (prefixToken, suffixToken, middleToken) = FimTemplate.GetTokens(config.ModelId);
 
-            var finalPrompt = string.IsNullOrEmpty(prefixToken)
+            // The visited-line annotation goes inside the FIM prefix: FIM models only see prefix/suffix.
+            var prompt = string.IsNullOrEmpty(parameters.RecentLineContext)
                 ? parameters.Prompt
-                : $"{prefixToken}{parameters.Prompt}{suffixToken}{parameters.Suffix}{middleToken}";
+                : parameters.RecentLineContext + "\n" + parameters.Prompt;
+
+            var finalPrompt = string.IsNullOrEmpty(prefixToken)
+                ? prompt
+                : $"{prefixToken}{prompt}{suffixToken}{parameters.Suffix}{middleToken}";
 
             var context = new CompletionContext
             {

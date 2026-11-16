@@ -74,11 +74,33 @@ namespace LMLocal.Infrastructure.Autocompletions.InlineCompletion
                 try
                 {
                     ThreadHelper.ThrowIfNotOnUIThread();
+
+                    if (textView.HasAggregateFocus)
+                    {
+                        var oldPoint = e.OldPosition.BufferPosition;
+                        if (oldPoint.GetContainingLine().LineNumber != e.NewPosition.BufferPosition.GetContainingLine().LineNumber)
+                            RecentCaretContext.Record(oldPoint.Snapshot, oldPoint.Position);
+                    }
+
                     tagger.HandleCaretMoved(e);
                 }
                 catch (Exception ex)
                 {
                     InternalLogger.Warn("caretHandler: " + ex.ToString());
+                }
+            }
+
+            void OnLostAggregateFocus(object s, EventArgs e)
+            {
+                try
+                {
+                    ThreadHelper.ThrowIfNotOnUIThread();
+                    var point = textView.Caret.Position.BufferPosition;
+                    RecentCaretContext.Record(point.Snapshot, point.Position);
+                }
+                catch (Exception ex)
+                {
+                    InternalLogger.Warn("focusHandler: " + ex.ToString());
                 }
             }
 
@@ -97,12 +119,14 @@ namespace LMLocal.Infrastructure.Autocompletions.InlineCompletion
             textView.TextBuffer.Changed += OnTextBufferChanged;
             textView.Caret.PositionChanged += OnCaretPositionChanged;
             textView.LayoutChanged += OnLayoutChanged;
+            textView.LostAggregateFocus += OnLostAggregateFocus;
 
             textView.Closed += (s, e) =>
             {
                 textView.TextBuffer.Changed -= OnTextBufferChanged;
                 textView.Caret.PositionChanged -= OnCaretPositionChanged;
                 textView.LayoutChanged -= OnLayoutChanged;
+                textView.LostAggregateFocus -= OnLostAggregateFocus;
 
                 if (textView.Properties.TryGetProperty(typeof(SuggestionTagger), out SuggestionTagger t))
                 {

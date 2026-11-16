@@ -195,6 +195,7 @@
     <Compile Include="Infrastructure\Autocompletions\InlineCompletion\EscapeCommandHandler.cs" />
     <Compile Include="Infrastructure\Autocompletions\InlineCompletion\GhostTextAdornment.cs" />
     <Compile Include="Infrastructure\Autocompletions\InlineCompletion\GhostTextAdornmentLayer.cs" />
+    <Compile Include="Infrastructure\Autocompletions\InlineCompletion\RecentCaretContext.cs" />
     <Compile Include="Infrastructure\Autocompletions\InlineCompletion\SuggestionPostProcessor.cs" />
     <Compile Include="Infrastructure\Autocompletions\InlineCompletion\SuggestionTagger.cs" />
     <Compile Include="Infrastructure\Autocompletions\InlineCompletion\SuggestionTextViewCreationListener.cs" />
